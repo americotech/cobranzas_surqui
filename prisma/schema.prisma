@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ====================== MODELOS ======================
+
+model Inmueble {
+  id          BigInt    @id @default(autoincrement())
+  nombre      String    @db.VarChar(100)
+  direccion   String    @db.Text
+  descripcion String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  contratos   Contrato[]
+
+  @@map("inmuebles")
+}
+
+model Inquilino {
+  id        BigInt    @id @default(autoincrement())
+  nombre    String    @db.VarChar(150)
+  telefono  String?   @db.VarChar(20)
+  email     String?   @db.VarChar(150)
+  dni       String?   @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  contratos Contrato[]
+
+  @@map("inquilinos")
+}
+
+model Contrato {
+  id              BigInt    @id @default(autoincrement())
+  inmuebleId      BigInt
+  inquilinoId     BigInt?
+  montoRenta      Decimal   @db.Decimal(12, 2)
+  diaVencimiento  Int       @db.Integer
+  fechaInicio     DateTime  @db.Date
+  fechaFin        DateTime? @db.Date
+  estado          String    @default("activo") @db.VarChar(20)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inmueble  Inmueble   @relation(fields: [inmuebleId], references: [id], onDelete: Cascade)
+  inquilino Inquilino? @relation(fields: [inquilinoId], references: [id], onDelete: SetNull)
+  pagos     Pago[]
+
+  @@map("contratos")
+}
+
+model Pago {
+  id                BigInt    @id @default(autoincrement())
+  contratoId        BigInt
+  periodo           DateTime  @db.Date
+  fechaVencimiento  DateTime  @db.Date
+  fechaPagoReal     DateTime? @db.Date
+  montoEsperado     Decimal   @db.Decimal(12, 2)
+  montoPagado       Decimal?  @db.Decimal(12, 2)
+  metodoPago        String?   @db.VarChar(50)
+  observaciones     String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  contrato Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@map("pagos")
+}
